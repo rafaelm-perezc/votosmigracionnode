@@ -1,0 +1,23 @@
+# Dependencias de Node
+node_modules/
+package-lock.json
+
+# Logs del sistema
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Base de datos SQLite (si no quieres versionarla)
+*.sqlite
+*.sqlite-journal
+
+# Carpetas de archivos temporales o subidas
+uploads/
+tmp/
+
+# Archivos de sistema operativo
+#.DS_Store
+#Thumbs.db
+
+# Configuración de entorno (si usaras .env)
+#.env
