@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/estudiantes', require('./routes/estudiantes'));
 app.use('/api/votos', require('./routes/votos'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Ruta por defecto para SPA (Single Page Application) o index
 app.get('/', (req, res) => {

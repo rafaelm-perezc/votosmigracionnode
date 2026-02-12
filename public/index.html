@@ -3,30 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Votación Escolar - Node.js</title>
-    
+    <title>Sistema de Votación</title>
     <link rel="stylesheet" href="css/bulma.min.css">
     <link rel="stylesheet" href="css/sweetalert2.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <section class="hero is-info is-small">
+    <section class="hero is-info is-small no-print">
         <div class="hero-body">
             <div class="container has-text-centered header-logos">
                 <div class="level">
-                    <div class="level-item">
-                        <img src="img/huila.png" alt="Logo Huila">
-                    </div>
+                    <div class="level-item"><img src="img/huila.png" alt="Escudo Huila"></div>
                     <div class="level-item">
                         <div>
                             <h1 class="title is-4">INSTITUCIÓN EDUCATIVA PROMOCIÓN SOCIAL</h1>
                             <h2 class="subtitle is-6">Sistema de Votación Electrónica</h2>
                         </div>
                     </div>
-                    <div class="level-item">
-                        <img src="img/escudo.png" alt="Escudo Institución">
-                    </div>
+                    <div class="level-item"><img src="img/escudo.png" alt="Escudo Colegio"></div>
                 </div>
             </div>
         </div>
@@ -34,10 +29,10 @@
 
     <div class="container is-max-desktop p-4">
 
-        <div class="level is-mobile">
+        <div class="level is-mobile no-print">
             <div class="level-left">
-                <button id="viewFunction" class="button is-warning section-hidden" onclick="viewFunction()">
-                    <span class="icon">⚙️</span> <span>Administrar</span>
+                <button id="viewFunction" class="button is-warning section-hidden" onclick="switchPanel('admon')">
+                    <span class="icon">⚙️</span> <span>Admin</span>
                 </button>
             </div>
             <div class="level-right">
@@ -50,43 +45,30 @@
         <div id="login" class="columns is-centered">
             <div class="column is-half">
                 <div class="card p-5">
-                    <h3 class="title is-4 has-text-centered">Ingreso de Jurados</h3>
+                    <h3 class="title is-4 has-text-centered">Ingreso</h3>
                     <div class="field">
                         <label class="label" for="usuario">Usuario</label>
-                        <div class="control">
-                            <input class="input" type="text" id="usuario" placeholder="Ej: mesa.1">
-                        </div>
+                        <div class="control"><input class="input" type="text" id="usuario" placeholder="Ej: mesa.1"></div>
                     </div>
                     <div class="field">
                         <label class="label" for="pass">Contraseña</label>
-                        <div class="control">
-                            <input class="input" type="password" id="pass" placeholder="******">
-                        </div>
+                        <div class="control"><input class="input" type="password" id="pass" placeholder="******"></div>
                     </div>
-                    <div class="control">
-                        <button class="button is-info is-fullwidth" onclick="login()">Ingresar</button>
-                    </div>
+                    <button class="button is-info is-fullwidth" onclick="login()">Ingresar</button>
                 </div>
             </div>
         </div>
 
-        <div id="validacion" class="section-hidden">
-            <div class="columns is-centered">
-                <div class="column is-half has-text-centered">
-                    <div class="card p-6">
-                        <h3 class="title is-4">Habilitar Votante</h3>
-                        <p class="mb-4">Ingrese el documento del estudiante para verificar si puede votar en esta mesa.</p>
-                        <div class="field has-addons">
-                            <div class="control is-expanded">
-                                <label class="is-sr-only" for="documento">Número de Documento</label>
-                                <input class="input is-large" type="number" id="documento" placeholder="Número de Documento">
-                            </div>
-                            <div class="control">
-                                <button class="button is-success is-large" onclick="validarDocumento()">
-                                    Validar
-                                </button>
-                            </div>
-                        </div>
+        <div id="validacion" class="section-hidden has-text-centered">
+            <div class="card p-6">
+                <h3 class="title is-4">Habilitar Votante</h3>
+                <div class="field has-addons is-justify-content-center">
+                    <div class="control">
+                        <label class="is-sr-only" for="documento">Número de Documento</label>
+                        <input class="input is-large" type="number" id="documento" placeholder="Documento de identidad">
+                    </div>
+                    <div class="control">
+                        <button class="button is-success is-large" onclick="validarDocumento()">Validar</button>
                     </div>
                 </div>
             </div>
@@ -94,148 +76,138 @@
 
         <div id="personero" class="section-hidden has-text-centered">
             <h2 class="title is-3 mb-5">Elección de Personero(a)</h2>
-            <div class="columns is-multiline is-centered">
-                <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Candidato 01', 'personero')">
-                        <figure class="image">
-                            <img src="img/personero1.png" class="candidate-img" alt="Foto Candidato 01">
-                        </figure>
-                        <p class="title is-5 mt-2">Candidato 01</p>
-                        <button class="button is-info is-small is-fullwidth mt-2">Votar</button>
-                    </div>
+            <div class="columns is-multiline is-centered" id="contenedorPersoneros">
                 </div>
-                <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Candidato 02', 'personero')">
-                        <figure class="image">
-                            <img src="img/personero2.png" class="candidate-img" alt="Foto Candidato 02">
-                        </figure>
-                        <p class="title is-5 mt-2">Candidato 02</p>
-                        <button class="button is-info is-small is-fullwidth mt-2">Votar</button>
-                    </div>
-                </div>
-                <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Voto en Blanco', 'personero')">
-                        <figure class="image">
-                            <img src="img/vb.png" class="candidate-img" alt="Voto en Blanco">
-                        </figure>
-                        <p class="title is-5 mt-2">Voto en Blanco</p>
-                        <button class="button is-grey is-small is-fullwidth mt-2">Votar</button>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div id="contralor" class="section-hidden has-text-centered">
             <h2 class="title is-3 mb-5">Elección de Contralor(a)</h2>
-            <div class="columns is-multiline is-centered">
+            <div class="columns is-multiline is-centered" id="contenedorContralores">
+                </div>
+        </div>
+
+        <div id="admon" class="section-hidden admin-panel">
+            <h2 class="title is-4 has-text-centered">Panel de Administración</h2>
+            <div class="columns is-multiline">
                 <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Candidato 01', 'contralor')">
-                        <figure class="image">
-                            <img src="img/contralor1.png" class="candidate-img" alt="Foto Candidato 01">
-                        </figure>
-                        <p class="title is-5 mt-2">Candidato 01</p>
-                        <button class="button is-info is-small is-fullwidth mt-2">Votar</button>
+                    <div class="card p-4 has-text-centered card-action" onclick="switchPanel('panelCargas')">
+                        <p class="title is-1">👥</p> <p>Cargar Estudiantes</p>
                     </div>
                 </div>
                 <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Candidato 02', 'contralor')">
-                        <figure class="image">
-                            <img src="img/contralor2.png" class="candidate-img" alt="Foto Candidato 02">
-                        </figure>
-                        <p class="title is-5 mt-2">Candidato 02</p>
-                        <button class="button is-info is-small is-fullwidth mt-2">Votar</button>
+                    <div class="card p-4 has-text-centered card-action" onclick="cargarConfigUI()">
+                        <p class="title is-1">⚙️</p> <p>Configuración</p>
                     </div>
                 </div>
                 <div class="column is-4">
-                    <div class="card p-4" onclick="votar('Voto en Blanco', 'contralor')">
-                        <figure class="image">
-                            <img src="img/vb.png" class="candidate-img" alt="Voto en Blanco">
-                        </figure>
-                        <p class="title is-5 mt-2">Voto en Blanco</p>
-                        <button class="button is-grey is-small is-fullwidth mt-2">Votar</button>
+                    <div class="card p-4 has-text-centered card-action" onclick="cargarGestorCandidatos()">
+                        <p class="title is-1">🖼️</p> <p>Candidatos</p>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <div class="card p-4 has-text-centered card-action" onclick="generarActa()">
+                        <p class="title is-1">📄</p> <p>Acta de Escrutinio</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="admon" class="section-hidden">
-            <div class="columns is-centered is-multiline">
-                <div class="column is-12 has-text-centered">
-                    <h2 class="title is-4">Panel de Administración</h2>
+        <div id="panelCargas" class="section-hidden admin-panel">
+            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+            <div class="card p-5">
+                <h3 class="title is-5">Cargar Estudiantes</h3>
+                <div class="field">
+                    <label class="label" for="archivoEstudiantes">Archivo Excel</label>
+                    <div class="control"><input class="input" type="file" id="archivoEstudiantes" accept=".xlsx, .xls"></div>
                 </div>
-                
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="mostrarCargaEstudiantes()">
-                        <figure class="image is-128x128 container">
-                            <img src="img/cargar_estudiantes.png" alt="Icono Cargar Estudiantes">
-                        </figure>
-                        <p class="title is-6 mt-3">Cargar Estudiantes</p>
-                    </div>
+                <div class="field">
+                    <label class="label" for="numMesas">Número de mesas</label>
+                    <div class="control"><input class="input" type="number" id="numMesas" placeholder="Ej: 6"></div>
                 </div>
+                <button class="button is-success" onclick="subirEstudiantes()">Procesar</button>
+            </div>
+        </div>
 
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="mostrarCargaVotos()">
-                        <figure class="image is-128x128 container">
-                            <img src="img/cargar_votos.png" alt="Icono Cargar Votos">
-                        </figure>
-                        <p class="title is-6 mt-3">Cargar Votos (Histórico)</p>
+        <div id="panelConfig" class="section-hidden admin-panel">
+            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+            <div class="card p-5">
+                <h3 class="title is-5">Configuración del Acta</h3>
+                <div class="columns is-multiline">
+                    <div class="column is-6">
+                        <label class="label" for="conf_rector">Rector(a)</label>
+                        <input id="conf_rector" class="input" placeholder="Nombre completo">
+                    </div>
+                    <div class="column is-6">
+                        <label class="label" for="conf_lider">Líder Proyecto</label>
+                        <input id="conf_lider" class="input" placeholder="Nombre docente">
+                    </div>
+                    <div class="column is-6">
+                        <label class="label" for="conf_lugar">Lugar</label>
+                        <input id="conf_lugar" class="input" placeholder="Sede Principal">
+                    </div>
+                    <div class="column is-6">
+                        <label class="label" for="conf_fecha">Fecha</label>
+                        <input id="conf_fecha" class="input" type="date">
+                    </div>
+                    <div class="column is-6">
+                        <label class="label" for="conf_inicio">Hora Inicio</label>
+                        <input id="conf_inicio" class="input" type="time">
+                    </div>
+                    <div class="column is-6">
+                        <label class="label" for="conf_fin">Hora Fin</label>
+                        <input id="conf_fin" class="input" type="time">
                     </div>
                 </div>
+                <button class="button is-primary" onclick="guardarConfig()">Guardar Cambios</button>
+            </div>
+        </div>
 
+        <div id="panelCandidatos" class="section-hidden admin-panel">
+            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+            <div class="columns">
                 <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="exportarExcel()">
-                        <figure class="image is-128x128 container">
-                            <img src="img/exportar.png" alt="Icono Exportar">
-                        </figure>
-                        <p class="title is-6 mt-3">Descargar Resultados</p>
+                    <div class="card p-4">
+                        <h4 class="title is-6">Nuevo Candidato</h4>
+                        <div class="field">
+                            <label class="label" for="cand_nombre">Nombre</label>
+                            <input id="cand_nombre" class="input" placeholder="Nombre completo">
+                        </div>
+                        <div class="field">
+                            <label class="label" for="cand_cargo">Cargo</label>
+                            <div class="select is-fullwidth">
+                                <select id="cand_cargo" aria-label="Seleccionar Cargo">
+                                    <option value="Personero">Personero</option>
+                                    <option value="Contralor">Contralor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="cand_foto">Fotografía</label>
+                            <input id="cand_foto" type="file" class="input" accept="image/*">
+                        </div>
+                        <button class="button is-link is-fullwidth" onclick="crearCandidato()">Agregar</button>
                     </div>
+                </div>
+                <div class="column is-8">
+                    <table class="table is-fullwidth is-striped" aria-label="Lista de candidatos">
+                        <thead><tr><th>Foto</th><th>Nombre</th><th>Cargo</th><th>Acción</th></tr></thead>
+                        <tbody id="tablaCandidatos"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div id="cargas" class="section-hidden">
-            <button class="button is-small is-light mb-4" onclick="viewFunction()">← Volver al Panel</button>
+        <div id="panelActa" class="section-hidden admin-panel has-background-white">
+            <button class="button is-small mb-4 no-print" onclick="switchPanel('admon')">← Volver</button>
+            <button class="button is-small is-info mb-4 no-print" onclick="imprimirActa()">🖨️ Imprimir / Guardar PDF</button>
             
-            <div id="cargarEstudiantes" class="card p-5 section-hidden">
-                <h3 class="title is-5">Carga Masiva de Estudiantes</h3>
-                <div class="field">
-                    <label class="label" for="archivoEstudiantes">Archivo Excel (.xlsx)</label>
-                    <div class="control">
-                        <input class="input" type="file" id="archivoEstudiantes" accept=".xlsx, .xls" title="Seleccionar archivo de estudiantes">
-                    </div>
+            <div id="contenidoActa" class="acta-container">
                 </div>
-                <div class="field">
-                    <label class="label" for="numMesas">Número de Mesas a Distribuir</label>
-                    <div class="control">
-                        <input class="input" type="number" id="numMesas" placeholder="Ej: 6" min="1">
-                    </div>
-                </div>
-                <button class="button is-success" onclick="confirmarCargaEstudiantes()">Procesar Carga</button>
-            </div>
-
-            <div id="cargarVotos" class="card p-5 section-hidden">
-                <h3 class="title is-5">Carga de Votos Históricos</h3>
-                <div class="field">
-                    <label class="label" for="archivoVotos">Archivo de Votos (.xlsx)</label>
-                    <div class="control">
-                        <input class="input" type="file" id="archivoVotos" accept=".xlsx, .xls" title="Seleccionar archivo de votos antiguos">
-                    </div>
-                </div>
-                <button class="button is-warning" onclick="confirmarCargaVotos()">Subir Votos</button>
-            </div>
         </div>
 
     </div>
 
-    <footer class="footer has-text-centered mt-5">
-        <p class="is-size-7">
-            <strong>Sistema de Votación</strong> desarrollado para la Institución Educativa. 
-            <br>Tecnología Node.js & SQLite - Modo Offline
-        </p>
-    </footer>
-
     <script src="js/sweetalert2.all.min.js"></script>
     <script src="js/main.js"></script>
-
 </body>
 </html>

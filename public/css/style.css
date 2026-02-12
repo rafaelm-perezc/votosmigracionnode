@@ -47,7 +47,7 @@ body {
     display: none; 
 }
 
-/* Nueva clase para reemplazar style="cursor: pointer" en el panel admin */
+/* Acciones en tarjetas (Cursor pointer y efectos) */
 .card-action {
     cursor: pointer;
     transition: transform 0.2s;
@@ -56,4 +56,28 @@ body {
 .card-action:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+/* Contenedor del Acta (Reemplaza el style inline) */
+.acta-container {
+    border: 1px solid #ccc; 
+    min-height: 800px;
+    padding: 3rem;
+    background-color: white;
+}
+
+/* Estilos específicos para impresión del ACTA */
+@media print {
+    body * { visibility: hidden; }
+    #panelActa, #panelActa * { visibility: visible; }
+    #panelActa { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+        margin: 0; 
+        padding: 0; 
+    }
+    .no-print { display: none !important; }
+    .acta-container { border: none; }
 }
