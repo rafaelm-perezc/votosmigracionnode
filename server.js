@@ -24,6 +24,15 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Endpoint para APAGAR SERVIDOR (Solo Admin)
+app.post('/api/admin/shutdown', (req, res) => {
+    res.json({ success: true, message: "Servidor apagándose..." });
+    console.log("🔴 Servidor apagado por el administrador.");
+    setTimeout(() => {
+        process.exit(0);
+    }, 1000);
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);

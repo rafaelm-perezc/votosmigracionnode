@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Votación</title>
+    <title>Sistema de Votación Escolar</title>
+    
     <link rel="stylesheet" href="css/bulma.min.css">
     <link rel="stylesheet" href="css/sweetalert2.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/acta.css">
 </head>
 <body>
 
@@ -14,200 +16,205 @@
         <div class="hero-body">
             <div class="container has-text-centered header-logos">
                 <div class="level">
-                    <div class="level-item"><img src="img/huila.png" alt="Escudo Huila"></div>
+                    <div class="level-item"><img src="img/huila.png" alt="Escudo del Departamento del Huila"></div>
                     <div class="level-item">
                         <div>
                             <h1 class="title is-4">INSTITUCIÓN EDUCATIVA PROMOCIÓN SOCIAL</h1>
                             <h2 class="subtitle is-6">Sistema de Votación Electrónica</h2>
                         </div>
                     </div>
-                    <div class="level-item"><img src="img/escudo.png" alt="Escudo Colegio"></div>
+                    <div class="level-item"><img src="img/escudo.png" alt="Escudo de la Institución Educativa"></div>
                 </div>
             </div>
         </div>
     </section>
 
     <div class="container is-max-desktop p-4">
-
+        
         <div class="level is-mobile no-print">
             <div class="level-left">
-                <button id="viewFunction" class="button is-warning section-hidden" onclick="switchPanel('admon')">
-                    <span class="icon">⚙️</span> <span>Admin</span>
-                </button>
+                <span id="infoMesa" class="tag is-info is-large is-hidden"></span>
             </div>
             <div class="level-right">
-                <button id="logoutButton" class="button is-danger is-outlined section-hidden" onclick="logout()">
-                    <span class="icon">🚪</span> <span>Salir</span>
-                </button>
+                <button id="btnAdmin" class="button is-warning is-small mr-2 is-hidden">⚙️ Panel</button>
+                
+                <button id="btnApagar" class="button is-black is-small mr-2 is-hidden">🛑 Apagar</button>
+                <button id="btnLogout" class="button is-danger is-outlined is-hidden">🚪 Salir</button>
             </div>
         </div>
 
-        <div id="login" class="columns is-centered">
-            <div class="column is-half">
-                <div class="card p-5">
-                    <h3 class="title is-4 has-text-centered">Ingreso</h3>
-                    <div class="field">
-                        <label class="label" for="usuario">Usuario</label>
-                        <div class="control"><input class="input" type="text" id="usuario" placeholder="Ej: mesa.1"></div>
+        <section id="view-login" class="view-section">
+            <div class="columns is-centered">
+                <div class="column is-half">
+                    <div class="card p-5">
+                        <h3 class="title is-4 has-text-centered">Ingreso</h3>
+                        <form id="formLogin">
+                            <div class="field">
+                                <label class="label" for="loginUser">Usuario</label>
+                                <input class="input" id="loginUser" name="usuario" placeholder="Ej: mesa.1" required>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="loginPass">Contraseña</label>
+                                <input class="input" id="loginPass" type="password" name="pass" placeholder="******" required>
+                            </div>
+                            <button type="submit" class="button is-info is-fullwidth">Ingresar</button>
+                        </form>
                     </div>
-                    <div class="field">
-                        <label class="label" for="pass">Contraseña</label>
-                        <div class="control"><input class="input" type="password" id="pass" placeholder="******"></div>
-                    </div>
-                    <button class="button is-info is-fullwidth" onclick="login()">Ingresar</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="validacion" class="section-hidden has-text-centered">
-            <div class="card p-6">
+        <section id="view-mode" class="view-section is-hidden has-text-centered">
+            <h3 class="title is-4 mb-5">Seleccione el modo de este dispositivo</h3>
+            <div class="columns is-centered">
+                <div class="column is-5">
+                    <div class="card p-5 card-action" id="btnModeJurado">
+                        <p class="title is-1">📋</p>
+                        <h4 class="title is-5">JURADO</h4>
+                        <p>Validar documentos y habilitar votantes.</p>
+                    </div>
+                </div>
+                <div class="column is-5">
+                    <div class="card p-5 card-action" id="btnModeUrna">
+                        <p class="title is-1">🗳️</p>
+                        <h4 class="title is-5">URNA DIGITAL</h4>
+                        <p>Pantalla para que los estudiantes voten.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-jurado" class="view-section is-hidden">
+            <div class="card p-6 has-text-centered">
                 <h3 class="title is-4">Habilitar Votante</h3>
+                <p class="mb-4">Ingrese el documento para desbloquear la Urna Digital.</p>
                 <div class="field has-addons is-justify-content-center">
                     <div class="control">
-                        <label class="is-sr-only" for="documento">Número de Documento</label>
-                        <input class="input is-large" type="number" id="documento" placeholder="Documento de identidad">
+                        <label class="is-sr-only" for="inputDocumento">Documento de Identidad</label>
+                        <input class="input is-large" type="number" id="inputDocumento" placeholder="Documento" title="Ingrese documento del estudiante">
                     </div>
-                    <div class="control">
-                        <button class="button is-success is-large" onclick="validarDocumento()">Validar</button>
-                    </div>
+                    <div class="control"><button id="btnValidar" class="button is-success is-large">HABILITAR</button></div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="personero" class="section-hidden has-text-centered">
-            <h2 class="title is-3 mb-5">Elección de Personero(a)</h2>
-            <div class="columns is-multiline is-centered" id="contenedorPersoneros">
+        <section id="view-urna-espera" class="view-section is-hidden has-text-centered">
+            <div class="box py-6 has-background-light">
+                <div class="loader-wrapper mb-4">
+                    <div class="loader is-loading loader-custom"></div>
                 </div>
-        </div>
+                <h2 class="title is-2 has-text-grey">URNA BLOQUEADA</h2>
+                <h3 class="subtitle is-4">Por favor, acérquese al Jurado.</h3>
+                <p>Mesa #<span id="lblMesaEspera"></span></p>
+            </div>
+        </section>
 
-        <div id="contralor" class="section-hidden has-text-centered">
-            <h2 class="title is-3 mb-5">Elección de Contralor(a)</h2>
-            <div class="columns is-multiline is-centered" id="contenedorContralores">
-                </div>
-        </div>
+        <section id="view-tarjeton" class="view-section is-hidden has-text-centered">
+            <div class="notification is-primary is-light mb-4">
+                Estudiante: <strong id="lblEstudianteVotando"></strong>
+            </div>
+            <h2 id="tituloCargo" class="title is-3 mb-5">Elección</h2>
+            <div id="contenedorCandidatos" class="columns is-multiline is-centered"></div>
+        </section>
 
-        <div id="admon" class="section-hidden admin-panel">
+        <section id="view-admin" class="view-section is-hidden">
             <h2 class="title is-4 has-text-centered">Panel de Administración</h2>
             <div class="columns is-multiline">
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="switchPanel('panelCargas')">
-                        <p class="title is-1">👥</p> <p>Cargar Estudiantes</p>
-                    </div>
-                </div>
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="cargarConfigUI()">
-                        <p class="title is-1">⚙️</p> <p>Configuración</p>
-                    </div>
-                </div>
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="cargarGestorCandidatos()">
-                        <p class="title is-1">🖼️</p> <p>Candidatos</p>
-                    </div>
-                </div>
-                <div class="column is-4">
-                    <div class="card p-4 has-text-centered card-action" onclick="generarActa()">
-                        <p class="title is-1">📄</p> <p>Acta de Escrutinio</p>
-                    </div>
-                </div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-cargas"><p class="title is-1">👥</p><p>Estudiantes</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-config"><p class="title is-1">⚙️</p><p>Configuración</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-candidatos"><p class="title is-1">🖼️</p><p>Candidatos</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-acta"><p class="title is-1">📄</p><p>Acta de Escrutinio</p></div></div>
             </div>
-        </div>
+        </section>
 
-        <div id="panelCargas" class="section-hidden admin-panel">
-            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+        <section id="view-cargas" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
             <div class="card p-5">
                 <h3 class="title is-5">Cargar Estudiantes</h3>
                 <div class="field">
-                    <label class="label" for="archivoEstudiantes">Archivo Excel</label>
-                    <div class="control"><input class="input" type="file" id="archivoEstudiantes" accept=".xlsx, .xls"></div>
+                    <label class="label" for="fileEstudiantes">Archivo Excel</label>
+                    <div class="control">
+                        <input class="input" type="file" id="fileEstudiantes" accept=".xlsx, .xls" title="Seleccionar archivo de estudiantes">
+                    </div>
                 </div>
                 <div class="field">
                     <label class="label" for="numMesas">Número de mesas</label>
-                    <div class="control"><input class="input" type="number" id="numMesas" placeholder="Ej: 6"></div>
+                    <div class="control">
+                        <input class="input" type="number" id="numMesas" placeholder="Número de mesas">
+                    </div>
                 </div>
-                <button class="button is-success" onclick="subirEstudiantes()">Procesar</button>
+                <button id="btnCargarEstudiantes" class="button is-success">Procesar</button>
             </div>
-        </div>
+        </section>
 
-        <div id="panelConfig" class="section-hidden admin-panel">
-            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+        <section id="view-config" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
             <div class="card p-5">
-                <h3 class="title is-5">Configuración del Acta</h3>
-                <div class="columns is-multiline">
-                    <div class="column is-6">
-                        <label class="label" for="conf_rector">Rector(a)</label>
-                        <input id="conf_rector" class="input" placeholder="Nombre completo">
+                <h3 class="title is-5">Configuración</h3>
+                <form id="formConfig">
+                    <div class="columns is-multiline">
+                        <div class="column is-6"><label class="label" for="confRector">Rector(a)</label><input id="confRector" class="input" name="rector"></div>
+                        <div class="column is-6"><label class="label" for="confLider">Líder Proyecto</label><input id="confLider" class="input" name="lider"></div>
+                        <div class="column is-6"><label class="label" for="confLugar">Lugar</label><input id="confLugar" class="input" name="lugar"></div>
+                        <div class="column is-6"><label class="label" for="confFecha">Fecha</label><input id="confFecha" class="input" name="fecha" type="date"></div>
+                        <div class="column is-6"><label class="label" for="confInicio">Hora Inicio</label><input id="confInicio" class="input" name="hora_inicio" type="time"></div>
+                        <div class="column is-6"><label class="label" for="confFin">Hora Fin</label><input id="confFin" class="input" name="hora_fin" type="time"></div>
                     </div>
-                    <div class="column is-6">
-                        <label class="label" for="conf_lider">Líder Proyecto</label>
-                        <input id="conf_lider" class="input" placeholder="Nombre docente">
-                    </div>
-                    <div class="column is-6">
-                        <label class="label" for="conf_lugar">Lugar</label>
-                        <input id="conf_lugar" class="input" placeholder="Sede Principal">
-                    </div>
-                    <div class="column is-6">
-                        <label class="label" for="conf_fecha">Fecha</label>
-                        <input id="conf_fecha" class="input" type="date">
-                    </div>
-                    <div class="column is-6">
-                        <label class="label" for="conf_inicio">Hora Inicio</label>
-                        <input id="conf_inicio" class="input" type="time">
-                    </div>
-                    <div class="column is-6">
-                        <label class="label" for="conf_fin">Hora Fin</label>
-                        <input id="conf_fin" class="input" type="time">
-                    </div>
-                </div>
-                <button class="button is-primary" onclick="guardarConfig()">Guardar Cambios</button>
+                    <button type="submit" class="button is-primary">Guardar</button>
+                </form>
             </div>
-        </div>
+        </section>
 
-        <div id="panelCandidatos" class="section-hidden admin-panel">
-            <button class="button is-small mb-4" onclick="switchPanel('admon')">← Volver</button>
+        <section id="view-candidatos" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
             <div class="columns">
                 <div class="column is-4">
                     <div class="card p-4">
                         <h4 class="title is-6">Nuevo Candidato</h4>
-                        <div class="field">
-                            <label class="label" for="cand_nombre">Nombre</label>
-                            <input id="cand_nombre" class="input" placeholder="Nombre completo">
-                        </div>
-                        <div class="field">
-                            <label class="label" for="cand_cargo">Cargo</label>
-                            <div class="select is-fullwidth">
-                                <select id="cand_cargo" aria-label="Seleccionar Cargo">
-                                    <option value="Personero">Personero</option>
-                                    <option value="Contralor">Contralor</option>
-                                </select>
+                        <form id="formCandidato">
+                            <div class="field">
+                                <label class="label" for="candNombre">Nombre</label>
+                                <input id="candNombre" class="input mb-2" name="nombre" placeholder="Nombre completo" required>
                             </div>
-                        </div>
-                        <div class="field">
-                            <label class="label" for="cand_foto">Fotografía</label>
-                            <input id="cand_foto" type="file" class="input" accept="image/*">
-                        </div>
-                        <button class="button is-link is-fullwidth" onclick="crearCandidato()">Agregar</button>
+                            <div class="field">
+                                <label class="label" for="candCargo">Cargo</label>
+                                <div class="select is-fullwidth mb-2">
+                                    <select id="candCargo" name="cargo" title="Seleccionar Cargo">
+                                        <option value="Personero">Personero</option>
+                                        <option value="Contralor">Contralor</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label" for="candFoto">Fotografía</label>
+                                <input id="candFoto" class="input mb-2" type="file" name="foto" required title="Subir foto del candidato">
+                            </div>
+                            <button type="submit" class="button is-link is-fullwidth">Agregar</button>
+                        </form>
                     </div>
                 </div>
                 <div class="column is-8">
-                    <table class="table is-fullwidth is-striped" aria-label="Lista de candidatos">
+                    <table class="table is-fullwidth is-striped" aria-label="Lista de Candidatos">
                         <thead><tr><th>Foto</th><th>Nombre</th><th>Cargo</th><th>Acción</th></tr></thead>
                         <tbody id="tablaCandidatos"></tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="panelActa" class="section-hidden admin-panel has-background-white">
-            <button class="button is-small mb-4 no-print" onclick="switchPanel('admon')">← Volver</button>
-            <button class="button is-small is-info mb-4 no-print" onclick="imprimirActa()">🖨️ Imprimir / Guardar PDF</button>
+        <section id="view-acta" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin no-print">← Volver</button>
+            <button id="btnDescargarPDF" class="button is-small is-danger mb-4 no-print">📄 Descargar PDF</button>
             
-            <div id="contenidoActa" class="acta-container">
+            <div id="contenidoActa" class="acta-container has-background-white p-6">
                 </div>
-        </div>
+        </section>
 
     </div>
 
-    <script src="js/sweetalert2.all.min.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/lib/sweetalert2.all.min.js"></script>
+    <script src="js/lib/html2pdf.bundle.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+
 </body>
 </html>

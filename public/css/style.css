@@ -81,3 +81,12 @@ body {
     .no-print { display: none !important; }
     .acta-container { border: none; }
 }
+
+/* ... resto de tu CSS ... */
+
+/* Loader personalizado para la urna */
+.loader-custom {
+    height: 50px; 
+    width: 50px; 
+    border-width: 4px;
+}

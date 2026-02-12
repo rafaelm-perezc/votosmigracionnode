@@ -10,7 +10,7 @@ router.post('/login', (req, res) => {
         return res.status(400).json({ error: "Por favor ingrese usuario y contraseña." });
     }
 
-    // Consulta segura usando placeholders (?)
+    // Consulta segura
     const sql = "SELECT id, nombre, usuario, rol, nummesa FROM usuarios WHERE usuario = ? AND pass = ?";
 
     db.get(sql, [usuario, pass], (err, row) => {
@@ -27,8 +27,9 @@ router.post('/login', (req, res) => {
                 data: {
                     id: row.id,
                     nombre: row.nombre,
+                    usuario: row.usuario,
                     rol: row.rol,
-                    nummesa: row.nummesa // Útil para saber si es una mesa de votación
+                    nummesa: row.nummesa
                 }
             });
         } else {
