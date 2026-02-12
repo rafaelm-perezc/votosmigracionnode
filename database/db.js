@@ -31,8 +31,8 @@ function initDb() {
 
         // Insertar Admin por defecto
         const sqlCheckAdmin = "SELECT id FROM usuarios WHERE usuario = ?";
-        db.get(sqlCheckAdmin, ['rafael.perez'], (err, row) => {
-            if (!row) db.run(`INSERT INTO usuarios (nombre, usuario, pass, rol) VALUES ('ADMINISTRADOR', 'rafael.perez', '1079174205', 'ADMINISTRADOR')`);
+        db.get(sqlCheckAdmin, ['admin'], (err, row) => {
+            if (!row) db.run(`INSERT INTO usuarios (nombre, usuario, pass, rol) VALUES ('ADMINISTRADOR', 'admin', 'admin', 'ADMINISTRADOR')`);
         });
 
         // Configuración por defecto
