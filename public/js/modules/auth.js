@@ -35,14 +35,11 @@ export const Auth = {
         if (currentUser.rol === 'ADMINISTRADOR') {
             UI.toggleAdminMenu(true);
             UI.showSection('view-admin');
-            // Mostrar botón Apagar solo a admin
-            document.getElementById('btnApagar').classList.remove('is-hidden');
         } else {
             // JURADO / URNA
             UI.toggleAdminMenu(false);
             // ENVIAR A SELECCIÓN DE MODO (NUEVO)
             UI.showSection('view-mode');
-            document.getElementById('btnApagar').classList.add('is-hidden');
         }
     },
 

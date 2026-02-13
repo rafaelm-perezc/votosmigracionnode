@@ -34,7 +34,9 @@ export const Voting = {
             } else {
                 Swal.fire('Error', res.error, 'error');
             }
-        } catch (e) { Swal.fire('Error', 'Error de conexión', 'error'); }
+        } catch (e) {
+            Swal.fire('Atención', e.message || 'Error de conexión', 'error');
+        }
     },
 
     // --- LÓGICA DE LA URNA (POLLING) ---
@@ -51,14 +53,19 @@ export const Voting = {
                 
                 // Si estado es 1 (VOTANDO), mostramos tarjetón
                 if (status.estado === 1) {
-                    clearInterval(pollingInterval); // Pausar polling mientras vota
+                    clearInterval(pollingInterval);
                     documentoVotante = status.documento_actual;
                     nombreVotante = status.nombre_estudiante;
                     document.getElementById('lblEstudianteVotando').textContent = nombreVotante;
                     Voting.mostrarTarjeton('Personero');
                 }
-            } catch (e) { console.error("Error polling", e); }
-        }, 2000); // Revisar cada 2 segundos
+
+                if (status.cerrada) {
+                    clearInterval(pollingInterval);
+                    await Swal.fire('Votaciones cerradas', status.motivo || 'Las votaciones no están habilitadas.', 'info');
+                }
+            } catch (e) { console.error('Error polling', e); }
+        }, 2000);
     },
 
     mostrarTarjeton: async (cargo) => {
@@ -133,7 +140,10 @@ export const Voting = {
                 Swal.fire('Error', res.error, 'error');
                 Voting.iniciarModoUrna();
             }
-        } catch (e) { Swal.fire('Error Fatal', 'No se pudo registrar', 'error'); }
+        } catch (e) {
+            Swal.fire('Atención', e.message || 'No se pudo registrar', 'error');
+            Voting.iniciarModoUrna();
+        }
     },
 
     detenerPolling: () => {

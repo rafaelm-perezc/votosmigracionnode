@@ -37,6 +37,20 @@ const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql,
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows)));
 const normalizeUpper = (v) => String(v || '').trim().toUpperCase();
 
+const clearDirectory = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    fs.readdirSync(dir).forEach((name) => {
+        const target = path.join(dir, name);
+        const stat = fs.statSync(target);
+        if (stat.isDirectory()) {
+            clearDirectory(target);
+            fs.rmdirSync(target);
+        } else {
+            fs.unlinkSync(target);
+        }
+    });
+};
+
 router.get('/candidatos', async (req, res) => {
     try {
         const rows = await dbAll('SELECT * FROM candidatos ORDER BY cargo, nombre');
@@ -339,6 +353,52 @@ router.post('/votos/importar', uploadTemp.single('archivoVotos'), async (req, re
         res.status(500).json({ error: error.message });
     } finally {
         if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+});
+
+
+router.get('/carnets', async (req, res) => {
+    try {
+        const configRows = await dbAll('SELECT clave, valor FROM configuracion');
+        const config = {};
+        configRows.forEach((r) => { config[r.clave] = r.valor; });
+
+        const estudiantes = await dbAll(`
+            SELECT documento,
+                   primer_apellido,
+                   segundo_apellido,
+                   primer_nombre,
+                   segundo_nombre,
+                   sede_educativa
+            FROM estudiantes
+            ORDER BY sede_educativa, primer_apellido, segundo_apellido, primer_nombre, segundo_nombre
+        `);
+
+        res.json({
+            institucion: 'INSTITUCIÓN EDUCATIVA PROMOCIÓN SOCIAL',
+            sedeDefault: config.lugar || '',
+            estudiantes
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/reset-sistema', async (req, res) => {
+    try {
+        const candidatosDir = path.join(__dirname, '../public/img/candidatos');
+        const firmasDir = path.join(__dirname, '../public/img/firmas');
+        const uploadsDir = path.join(__dirname, '../uploads');
+
+        clearDirectory(candidatosDir);
+        clearDirectory(firmasDir);
+        clearDirectory(uploadsDir);
+
+        await db.resetDatabase();
+
+        res.json({ success: true, message: 'Sistema reiniciado correctamente.' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

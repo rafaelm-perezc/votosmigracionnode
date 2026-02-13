@@ -25,17 +25,14 @@ export const UI = {
 
     toggleAdminMenu: (show) => {
         const btnAdmin = document.getElementById('btnAdmin');
-        const btnApagar = document.getElementById('btnApagar');
         const btnLogout = document.getElementById('btnLogout');
 
         // Verificamos que los elementos existan antes de usar classList
         if (show) {
             if(btnAdmin) btnAdmin.classList.remove('is-hidden');
-            if(btnApagar) btnApagar.classList.remove('is-hidden');
             if(btnLogout) btnLogout.classList.remove('is-hidden');
         } else {
             if(btnAdmin) btnAdmin.classList.add('is-hidden');
-            if(btnApagar) btnApagar.classList.add('is-hidden');
             // Logout se maneja aparte o se oculta aquí también
         }
     },

@@ -23,21 +23,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LOGOUT ---
     const btnLogout = document.getElementById('btnLogout');
     if(btnLogout) {
-        btnLogout.addEventListener('click', () => {
+        btnLogout.addEventListener('click', async () => {
             Voting.detenerPolling();
-            Auth.logout();
-        });
-    }
+            const user = Auth.getUser();
+            if (user?.rol === 'ADMINISTRADOR') {
+                const result = await Swal.fire({
+                    title: 'Cerrar sesión de administrador',
+                    text: 'También puede cerrar sesión y apagar el servidor.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'Solo cerrar sesión',
+                    denyButtonText: 'Cerrar sesión y apagar'
+                });
 
-    // --- APAGAR SERVIDOR ---
-    const btnApagar = document.getElementById('btnApagar');
-    if(btnApagar) {
-        btnApagar.addEventListener('click', async () => {
-            if(confirm('¿Seguro que desea APAGAR el servidor? Nadie podrá votar.')) {
-                await API.post('/admin/shutdown', {});
-                alert('Sistema apagado.');
-                window.close();
+                if (result.isDenied) {
+                    await API.post('/admin/shutdown', {});
+                    Auth.logout();
+                    return;
+                }
+                if (!result.isConfirmed) return;
             }
+            Auth.logout();
         });
     }
 
@@ -156,4 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnPlantillaVotos = document.getElementById('btnPlantillaVotos');
     if (btnPlantillaVotos) btnPlantillaVotos.addEventListener('click', Admin.descargarPlantillaVotos);
+
+    const btnCarnets = document.getElementById('btnGenerarCarnets');
+    if (btnCarnets) btnCarnets.addEventListener('click', Admin.generarCarnets);
+
+    const btnResetSistema = document.getElementById('btnResetSistema');
+    if (btnResetSistema) btnResetSistema.addEventListener('click', Admin.limpiarSistema);
 });

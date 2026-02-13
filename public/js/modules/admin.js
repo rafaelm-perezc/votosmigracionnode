@@ -51,23 +51,51 @@ export const Admin = {
 
     generarPDFMesas: (asignados) => {
         if (!asignados.length || typeof html2pdf === 'undefined') return;
+
+        const ordenados = [...asignados].sort((a, b) => {
+            const porSede = String(a.sede).localeCompare(String(b.sede), 'es');
+            if (porSede !== 0) return porSede;
+            const porMesa = Number(a.mesa) - Number(b.mesa);
+            if (porMesa !== 0) return porMesa;
+            return Number(a.documento) - Number(b.documento);
+        });
+
+        const porSede = ordenados.reduce((acc, row) => {
+            if (!acc[row.sede]) acc[row.sede] = [];
+            acc[row.sede].push(row);
+            return acc;
+        }, {});
+
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = `
-            <div style="padding:20px; font-family:Arial;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <img src="img/huila.png" style="height:70px;">
-                    <div style="text-align:center;"><h2>INSTITUCIÓN EDUCATIVA PROMOCIÓN SOCIAL</h2><p>ASIGNACIÓN DE MESAS</p></div>
-                    <img src="img/escudo.png" style="height:70px;">
+        wrapper.style.fontFamily = 'Arial, sans-serif';
+
+        wrapper.innerHTML = Object.entries(porSede).map(([sede, rows], index) => `
+            <section style="${index > 0 ? 'page-break-before:always;' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <img src="img/escudo.png" style="height:80px;" alt="Escudo institución">
+                    <div style="text-align:center;">
+                        <h2 style="margin:0;">INSTITUCIÓN EDUCATIVA PROMOCIÓN SOCIAL</h2>
+                        <p style="margin:0.25rem 0 0 0;"><strong>SEDE:</strong> ${sede}</p>
+                        <p style="margin:0.25rem 0 0 0;">ASIGNACIÓN DE MESAS</p>
+                    </div>
+                    <img src="img/huila.png" style="height:80px;" alt="Escudo departamento">
                 </div>
-                <table style="width:100%;border-collapse:collapse;margin-top:15px;" border="1" cellpadding="5">
+                <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="6">
                     <thead><tr><th>DOCUMENTO</th><th>SEDE</th><th>MESA</th></tr></thead>
                     <tbody>
-                        ${asignados.map((a) => `<tr><td>${a.documento}</td><td>${a.sede}</td><td>${a.mesa}</td></tr>`).join('')}
+                        ${rows.map((a) => `<tr><td>${a.documento}</td><td>${a.sede}</td><td>${a.mesa}</td></tr>`).join('')}
                     </tbody>
                 </table>
-            </div>
-        `;
-        html2pdf().set({ margin: 0.5, filename: 'asignacion_mesas.pdf' }).from(wrapper).save();
+            </section>
+        `).join('');
+
+        html2pdf().set({
+            margin: [3, 3, 3, 3],
+            filename: 'asignacion_mesas.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'cm', format: 'legal', orientation: 'portrait' }
+        }).from(wrapper).save();
     },
 
     preanalizarArchivo: async (file) => {
@@ -111,7 +139,9 @@ export const Admin = {
             const config = await API.get('/admin/config');
             const form = document.getElementById('formConfig');
             Object.keys(config).forEach((key) => {
-                if (form.elements[key]) form.elements[key].value = config[key];
+                const element = form.elements[key];
+                if (!element || element.type === 'file') return;
+                element.value = config[key];
             });
             if (document.getElementById('firmaRectorActual')) {
                 document.getElementById('firmaRectorActual').src = config.firma_rector ? `/${config.firma_rector}` : '';
@@ -141,6 +171,64 @@ export const Admin = {
     abrirMesas: async () => {
         await API.post('/admin/mesas/abrir', {});
         Swal.fire('Mesas abiertas', 'La votación quedó habilitada.', 'success');
+    },
+
+    generarCarnets: async () => {
+        if (typeof html2pdf === 'undefined') return;
+        const data = await API.get('/admin/carnets');
+        const estudiantes = data.estudiantes || [];
+        if (!estudiantes.length) {
+            return Swal.fire('Atención', 'No hay estudiantes cargados para generar carnés.', 'warning');
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.style.fontFamily = 'Arial, sans-serif';
+        wrapper.style.display = 'grid';
+        wrapper.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        wrapper.style.gap = '0.8rem';
+
+        wrapper.innerHTML = estudiantes.map((e) => {
+            const apellidos = `${e.primer_apellido || ''} ${e.segundo_apellido || ''}`.trim();
+            const nombres = `${e.primer_nombre || ''} ${e.segundo_nombre || ''}`.trim();
+            return `
+                <div style="border:1px solid #222;border-radius:10px;padding:0.7rem;min-height:170px;display:flex;flex-direction:column;justify-content:space-between;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <img src="img/escudo.png" style="height:42px;" alt="Escudo institución">
+                        <div style="text-align:center;flex:1;padding:0 0.4rem;">
+                            <div style="font-size:11px;font-weight:700;">${data.institucion}</div>
+                            <div style="font-size:10px;">SEDE: ${e.sede_educativa || data.sedeDefault || 'N/A'}</div>
+                        </div>
+                        <img src="img/huila.png" style="height:42px;" alt="Escudo departamento">
+                    </div>
+                    <div style="text-align:center;margin-top:0.4rem;">
+                        <div style="font-size:12px;font-weight:700;">DOC. ${e.documento}</div>
+                        <div style="font-size:13px;font-weight:700;margin-top:0.4rem;">${apellidos}</div>
+                        <div style="font-size:13px;margin-top:0.2rem;">${nombres}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        html2pdf().set({
+            margin: 0.7,
+            filename: 'carnets_estudiantes.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'cm', format: 'letter', orientation: 'portrait' }
+        }).from(wrapper).save();
+    },
+
+    limpiarSistema: async () => {
+        const decision = await Swal.fire({
+            title: '¿Reiniciar sistema completo?',
+            text: 'Se borrarán estudiantes, votos, candidatos, firmas y archivos temporales.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reiniciar'
+        });
+        if (!decision.isConfirmed) return;
+        const res = await API.post('/admin/reset-sistema', {});
+        Swal.fire('Proceso completado', res.message, 'success');
     },
 
     cargarCandidatosTabla: async () => {

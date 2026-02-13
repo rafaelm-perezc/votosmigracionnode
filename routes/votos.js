@@ -10,7 +10,7 @@ const estaEnHorario = async () => {
     const rows = await new Promise((resolve, reject) => db.all('SELECT clave, valor FROM configuracion', (err, r) => err ? reject(err) : resolve(r)));
     const cfg = {};
     rows.forEach((r) => { cfg[r.clave] = r.valor; });
-    if (cfg.votacion_habilitada === '0') return { ok: false, motivo: 'Las mesas fueron cerradas por administración.' };
+    if (cfg.votacion_habilitada === '0') return { ok: false, motivo: 'Las mesas fueron cerradas manualmente por el administrador del sistema.' };
 
     const now = new Date();
     const hoy = now.toISOString().slice(0, 10);
@@ -18,7 +18,7 @@ const estaEnHorario = async () => {
 
     const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     if (cfg.hora_inicio && hhmm < cfg.hora_inicio) return { ok: false, motivo: 'La jornada aún no inicia.' };
-    if (cfg.hora_fin && hhmm > cfg.hora_fin) return { ok: false, motivo: 'La jornada de votación ya cerró.' };
+    if (cfg.hora_fin && hhmm > cfg.hora_fin) return { ok: false, motivo: 'Las votaciones están cerradas por estar fuera del horario establecido.' };
 
     return { ok: true };
 };
@@ -43,7 +43,10 @@ router.post('/habilitar', async (req, res) => {
 
         // Validar si ya votó
         const voto = await dbGet("SELECT id FROM votos WHERE documento = ?", [documento]);
-        if (voto) return res.status(409).json({ error: "El estudiante YA VOTÓ." });
+        if (voto) {
+            const nombreCompleto = `${est.primer_apellido || ''} ${est.segundo_apellido || ''} ${est.primer_nombre || ''} ${est.segundo_nombre || ''}`.replace(/\s+/g, ' ').trim();
+            return res.status(409).json({ error: `${nombreCompleto} ya ejerció su derecho al voto. Intentar votar nuevamente constituye fraude.` });
+        }
 
         // ACTIVAR LA MESA (Estado 1 = Votando)
         // Usamos INSERT OR REPLACE para asegurar que la mesa exista en la tabla de control
@@ -58,8 +61,11 @@ router.post('/habilitar', async (req, res) => {
 // 2. URNA: CONSULTAR ESTADO (Polling constante)
 router.get('/estado/:numMesa', async (req, res) => {
     try {
+        const horario = await estaEnHorario();
+        if (!horario.ok) return res.json({ estado: 0, cerrada: true, motivo: horario.motivo });
+
         const row = await dbGet("SELECT * FROM control_mesas WHERE num_mesa = ?", [req.params.numMesa]);
-        if (!row) return res.json({ estado: 0 }); // Mesa no inicializada o inactiva
+        if (!row) return res.json({ estado: 0 });
         res.json(row);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
