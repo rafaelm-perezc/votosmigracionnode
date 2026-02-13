@@ -94,14 +94,23 @@ export const Reports = {
     renderSimpleBars: (id, rows) => {
         const container = document.getElementById(id);
         if (!container) return;
+        const total = rows.reduce((acc, r) => acc + Number(r.votos || 0), 0) || 1;
         const max = Math.max(...rows.map((r) => r.votos), 1);
-        container.innerHTML = rows.map((r) => `
-            <div style="margin-bottom:8px;">
-                <div style="font-size:12px">${r.candidato} (${r.votos})</div>
-                <div style="background:#eaeaea;height:20px;border-radius:6px;overflow:hidden;">
-                    <div style="width:${(r.votos * 100) / max}%;background:#209cee;height:100%"></div>
+        container.innerHTML = rows.map((r) => {
+            const pct = ((Number(r.votos || 0) * 100) / total).toFixed(2);
+            return `
+                <div style="margin-bottom:12px;border:1px solid #eee;padding:8px;border-radius:8px">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                        <img src="/${r.imagen || 'img/default.png'}" style="width:34px;height:34px;object-fit:cover;border-radius:50%;">
+                        <div style="font-size:12px;">${r.candidato}</div>
+                        <div style="font-size:12px;margin-left:auto">${r.votos} votos</div>
+                    </div>
+                    <div style="background:#eaeaea;height:16px;border-radius:6px;overflow:hidden;">
+                        <div style="width:${(r.votos * 100) / max}%;background:#209cee;height:100%"></div>
+                    </div>
+                    <div style="font-size:22px;font-weight:700;text-align:right;line-height:1.2">${pct}%</div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 };

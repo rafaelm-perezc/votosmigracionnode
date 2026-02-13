@@ -173,6 +173,7 @@
                     <div class="card p-4">
                         <h4 class="title is-6">Sedes y grados configurados</h4>
                         <ul id="listaSedesGrados"></ul>
+                        <div id="boxAsignacionMasiva" class="mt-4"></div>
                     </div>
                 </div>
             </div>
@@ -183,9 +184,9 @@
             <div class="columns">
                 <div class="column is-6">
                     <div class="card p-4">
-                        <h4 class="title is-6">Descargar votos por sede</h4>
-                        <div class="select is-fullwidth mb-2"><select id="sedeVotos" title="Seleccionar sede para descargar votos" aria-label="Seleccionar sede de votos"></select></div>
-                        <button id="btnExportarVotos" class="button is-info is-small">Descargar Excel</button>
+                        <h4 class="title is-6">Consolidado general</h4>
+                        <button id="btnExportarConsolidado" class="button is-info is-small mr-2">Descargar consolidado Excel</button>
+                        <button id="btnPlantillaVotos" class="button is-link is-light is-small">Descargar plantilla votos</button>
                     </div>
                 </div>
                 <div class="column is-6">
@@ -286,6 +287,8 @@
         </section>
 
     </div>
+
+    <footer class="has-text-centered p-4 mt-6">© 2026 Rafael Mauricio Pérez Campos - Ingeniero de Sistemas</footer>
 
     <script src="js/lib/sweetalert2.all.min.js"></script>
     <script src="js/lib/html2pdf.bundle.min.js"></script>

@@ -19,6 +19,27 @@ const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
 });
 
 const normalize = (value) => String(value || '').trim();
+const normalizeUpper = (value) => normalize(value).toUpperCase();
+
+const GRADE_NUMBER_MAP = {
+    '0': 'TRANSICIÓN',
+    '1': 'PRIMERO',
+    '2': 'SEGUNDO',
+    '3': 'TERCERO',
+    '4': 'CUARTO',
+    '5': 'QUINTO',
+    '6': 'SEXTO',
+    '7': 'SÉPTIMO',
+    '8': 'OCTAVO',
+    '9': 'NOVENO',
+    '10': 'DÉCIMO',
+    '11': 'UNDÉCIMO'
+};
+
+const normalizeGrade = (value) => {
+    const raw = normalizeUpper(value);
+    return Object.prototype.hasOwnProperty.call(GRADE_NUMBER_MAP, raw) ? GRADE_NUMBER_MAP[raw] : raw;
+};
 
 router.get('/plantilla', (req, res) => {
     const filePath = path.join(__dirname, '../plantillas/plantillaCargaMasiva.xlsx');
@@ -36,7 +57,7 @@ router.post('/preanalizar', upload.single('archivoEstudiantes'), async (req, res
         const sedes = {};
         rows.forEach((row) => {
             if (!row[0]) return;
-            const sede = normalize(row[6]);
+            const sede = normalizeUpper(row[6]);
             if (!sede) return;
             sedes[sede] = (sedes[sede] || 0) + 1;
         });
@@ -62,9 +83,6 @@ router.post('/cargar', upload.single('archivoEstudiantes'), async (req, res) => 
         const rows = data.slice(1);
 
         const sedes = await dbAll('SELECT id, nombre FROM sedes');
-        if (!sedes.length) {
-            return res.status(400).json({ error: 'Debe registrar las sedes antes de cargar estudiantes.' });
-        }
 
         const grados = await dbAll(`
             SELECT g.nombre, s.nombre AS sede
@@ -81,24 +99,29 @@ router.post('/cargar', upload.single('archivoEstudiantes'), async (req, res) => 
         for (const row of rows) {
             if (!row[0]) continue;
             const documento = normalize(row[0]);
-            const sede = normalize(row[6]);
-            const grado = normalize(row[5]);
+            const sede = normalizeUpper(row[6]);
+            const grado = normalizeGrade(row[5]);
+
+            if (!documento || !sede || !grado) continue;
 
             if (!sedeMap.has(sede.toLowerCase())) {
-                throw new Error(`La sede "${sede}" no existe en configuración.`);
+                const insertSede = await dbRun('INSERT INTO sedes (nombre) VALUES (?)', [sede]);
+                sedeMap.set(sede.toLowerCase(), { id: insertSede.lastID, nombre: sede });
             }
 
             if (!gradoMap.has(`${sede.toLowerCase()}::${grado.toLowerCase()}`)) {
-                throw new Error(`El grado "${grado}" no está registrado para la sede "${sede}".`);
+                const sedeData = sedeMap.get(sede.toLowerCase());
+                await dbRun('INSERT OR IGNORE INTO grados (nombre, sede_id) VALUES (?, ?)', [grado, sedeData.id]);
+                gradoMap.add(`${sede.toLowerCase()}::${grado.toLowerCase()}`);
             }
 
             conteoPorSede[sede] = (conteoPorSede[sede] || 0) + 1;
             registros.push({
                 documento,
-                primer_apellido: normalize(row[1]),
-                segundo_apellido: normalize(row[2]),
-                primer_nombre: normalize(row[3]),
-                segundo_nombre: normalize(row[4]),
+                primer_apellido: normalizeUpper(row[1]),
+                segundo_apellido: normalizeUpper(row[2]),
+                primer_nombre: normalizeUpper(row[3]),
+                segundo_nombre: normalizeUpper(row[4]),
                 grado,
                 sede
             });
@@ -121,7 +144,6 @@ router.post('/cargar', upload.single('archivoEstudiantes'), async (req, res) => 
 
         await dbRun('BEGIN TRANSACTION');
         await dbRun("DELETE FROM usuarios WHERE rol = 'MVOTACION'");
-        await dbRun('DELETE FROM estudiantes');
         await dbRun('DELETE FROM control_mesas');
 
         const sedeOffsets = {};
@@ -140,9 +162,21 @@ router.post('/cargar', upload.single('archivoEstudiantes'), async (req, res) => 
             await dbRun('INSERT INTO control_mesas (num_mesa, estado) VALUES (?, 0)', [i]);
         }
 
+        const asignadosPdf = [];
+        let cargados = 0;
+        let omitidos = 0;
+
         for (const r of registros) {
+            const existente = await dbGet('SELECT documento FROM estudiantes WHERE documento = ?', [r.documento]);
+            if (existente) {
+                omitidos++;
+                continue;
+            }
+
             const mesaSede = sedeOffsets[r.sede];
-            const mesaLocal = mesaSede.cantidad === 1 ? 1 : Math.floor(Math.random() * mesaSede.cantidad) + 1;
+            let mesaLocal = mesaSede.cantidad === 1 ? 1 : Math.floor(Math.random() * mesaSede.cantidad) + 1;
+            if (r.grado === 'TRANSICIÓN') mesaLocal = 1;
+            if (r.grado === 'PRIMERO' && mesaSede.cantidad > 1) mesaLocal = 2;
             const mesa = mesaSede.inicio + (mesaLocal - 1);
 
             await dbRun(
@@ -150,15 +184,19 @@ router.post('/cargar', upload.single('archivoEstudiantes'), async (req, res) => 
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
                 [r.documento, r.primer_apellido, r.segundo_apellido, r.primer_nombre, r.segundo_nombre, r.grado, r.sede, mesa]
             );
+
+            asignadosPdf.push({ documento: r.documento, sede: r.sede, mesa });
+            cargados++;
         }
 
         await dbRun('COMMIT');
 
         res.json({
             success: true,
-            message: 'Carga masiva completada por sedes.',
+            message: `Carga masiva completada. Cargados: ${cargados}. Omitidos por documento repetido: ${omitidos}.`,
             resumen: conteoPorSede,
-            mesas: asignacionMesas
+            mesas: asignacionMesas,
+            asignados_pdf: asignadosPdf
         });
     } catch (error) {
         await dbRun('ROLLBACK').catch(() => {});

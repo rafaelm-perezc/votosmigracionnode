@@ -35,6 +35,7 @@ const uploadTemp = multer({ dest: 'uploads/' });
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => db.run(sql, params, function (err) { err ? reject(err) : resolve(this); }));
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => err ? reject(err) : resolve(row)));
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows)));
+const normalizeUpper = (v) => String(v || '').trim().toUpperCase();
 
 router.get('/candidatos', async (req, res) => {
     try {
@@ -46,7 +47,8 @@ router.get('/candidatos', async (req, res) => {
 });
 
 router.post('/candidatos', uploadCandidato.single('foto'), async (req, res) => {
-    const { nombre, cargo } = req.body;
+    const nombre = normalizeUpper(req.body.nombre);
+    const cargo = String(req.body.cargo || '').trim();
     const imagen = req.file ? `img/candidatos/${req.file.filename}` : 'img/default.png';
     if (!nombre || !cargo) return res.status(400).json({ error: 'Datos incompletos' });
 
@@ -83,20 +85,56 @@ router.get('/sedes', async (req, res) => {
 
 router.post('/sedes', async (req, res) => {
     try {
-        await dbRun('INSERT INTO sedes (nombre) VALUES (?)', [String(req.body.nombre || '').trim()]);
+        await dbRun('INSERT INTO sedes (nombre) VALUES (?)', [normalizeUpper(req.body.nombre)]);
         res.json({ success: true });
     } catch (error) {
         res.status(400).json({ error: 'No se pudo crear la sede. Verifique que no esté repetida.' });
     }
 });
 
+router.put('/sedes/:id', async (req, res) => {
+    try {
+        await dbRun('UPDATE sedes SET nombre = ? WHERE id = ?', [normalizeUpper(req.body.nombre), Number(req.params.id)]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: 'No se pudo actualizar la sede.' });
+    }
+});
+
 router.post('/grados', async (req, res) => {
     const { sede_id, nombre } = req.body;
     try {
-        await dbRun('INSERT INTO grados (nombre, sede_id) VALUES (?, ?)', [String(nombre || '').trim(), Number(sede_id)]);
+        await dbRun('INSERT INTO grados (nombre, sede_id) VALUES (?, ?)', [normalizeUpper(nombre), Number(sede_id)]);
         res.json({ success: true });
     } catch (error) {
         res.status(400).json({ error: 'No se pudo crear el grado en la sede indicada.' });
+    }
+});
+
+router.delete('/grados/:id', async (req, res) => {
+    try {
+        await dbRun('DELETE FROM grados WHERE id = ?', [Number(req.params.id)]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ error: 'No se pudo eliminar el grado.' });
+    }
+});
+
+router.post('/grados/asignar', async (req, res) => {
+    const { sede_ids, grados } = req.body;
+    if (!Array.isArray(sede_ids) || !Array.isArray(grados)) return res.status(400).json({ error: 'Datos inválidos.' });
+    try {
+        await dbRun('BEGIN TRANSACTION');
+        for (const sedeId of sede_ids) {
+            for (const g of grados) {
+                await dbRun('INSERT OR IGNORE INTO grados (nombre, sede_id) VALUES (?, ?)', [normalizeUpper(g), Number(sedeId)]);
+            }
+        }
+        await dbRun('COMMIT');
+        res.json({ success: true });
+    } catch (error) {
+        await dbRun('ROLLBACK').catch(() => {});
+        res.status(400).json({ error: 'No se pudieron asignar los grados.' });
     }
 });
 
@@ -130,14 +168,26 @@ router.post('/config', uploadFirmas.fields([{ name: 'firma_rector', maxCount: 1 
     try {
         await dbRun('BEGIN TRANSACTION');
         const updates = Object.entries(data);
+        const noUpper = new Set(['fecha', 'hora_inicio', 'hora_fin']);
         for (const [k, v] of updates) {
-            await dbRun('UPDATE configuracion SET valor = ? WHERE clave = ?', [v, k]);
+            const valor = noUpper.has(k) ? String(v || '').trim() : normalizeUpper(v);
+            await dbRun('UPDATE configuracion SET valor = ? WHERE clave = ?', [valor, k]);
         }
 
         if (req.files?.firma_rector?.[0]) {
+            const prev = await dbGet('SELECT valor FROM configuracion WHERE clave = ?', ['firma_rector']);
+            if (prev?.valor) {
+                const prevPath = path.join(__dirname, '../public', prev.valor);
+                if (fs.existsSync(prevPath)) fs.unlinkSync(prevPath);
+            }
             await dbRun('UPDATE configuracion SET valor = ? WHERE clave = ?', [`img/firmas/${req.files.firma_rector[0].filename}`, 'firma_rector']);
         }
         if (req.files?.firma_lider?.[0]) {
+            const prev = await dbGet('SELECT valor FROM configuracion WHERE clave = ?', ['firma_lider']);
+            if (prev?.valor) {
+                const prevPath = path.join(__dirname, '../public', prev.valor);
+                if (fs.existsSync(prevPath)) fs.unlinkSync(prevPath);
+            }
             await dbRun('UPDATE configuracion SET valor = ? WHERE clave = ?', [`img/firmas/${req.files.firma_lider[0].filename}`, 'firma_lider']);
         }
         await dbRun('COMMIT');
@@ -160,8 +210,18 @@ router.post('/mesas/abrir', async (req, res) => {
 
 router.get('/resultados-vivo', async (req, res) => {
     try {
-        const personero = await dbAll('SELECT candidatoPersonero as candidato, COUNT(*) as votos FROM votos GROUP BY candidatoPersonero ORDER BY votos DESC');
-        const contralor = await dbAll('SELECT candidatoContralor as candidato, COUNT(*) as votos FROM votos GROUP BY candidatoContralor ORDER BY votos DESC');
+        const personero = await dbAll(`
+            SELECT v.candidatoPersonero as candidato, COUNT(*) as votos, COALESCE(c.imagen, 'img/default.png') as imagen
+            FROM votos v LEFT JOIN candidatos c ON c.nombre = v.candidatoPersonero
+            GROUP BY v.candidatoPersonero
+            ORDER BY votos DESC
+        `);
+        const contralor = await dbAll(`
+            SELECT v.candidatoContralor as candidato, COUNT(*) as votos, COALESCE(c.imagen, 'img/default.png') as imagen
+            FROM votos v LEFT JOIN candidatos c ON c.nombre = v.candidatoContralor
+            GROUP BY v.candidatoContralor
+            ORDER BY votos DESC
+        `);
         res.json({ personero, contralor });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -183,6 +243,55 @@ router.get('/votos/exportar/:sede', async (req, res) => {
         xlsx.utils.book_append_sheet(wb, ws, 'votos');
 
         const filename = `votos${sede.replace(/\s+/g, '')}.xlsx`;
+        const tempPath = path.join(__dirname, '../uploads', filename);
+        ensureDir(path.dirname(tempPath));
+        xlsx.writeFile(wb, tempPath);
+        res.download(tempPath, filename, () => {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/votos/exportar-general', async (req, res) => {
+    try {
+        const rows = await dbAll(`
+            SELECT e.documento,
+                   TRIM(COALESCE(e.primer_apellido,'') || ' ' || COALESCE(e.segundo_apellido,'' ) || ' ' || COALESCE(e.primer_nombre,'') || ' ' || COALESCE(e.segundo_nombre,'')) AS nombre_completo,
+                   e.sede_educativa AS sede,
+                   e.grado,
+                   e.mesa,
+                   COALESCE(v.candidatoPersonero, '') AS voto_personero,
+                   COALESCE(v.candidatoContralor, '') AS voto_contralor,
+                   COALESCE(v.fecha_voto, '') AS fecha_voto
+            FROM estudiantes e
+            LEFT JOIN votos v ON v.documento = e.documento
+            ORDER BY e.sede_educativa, e.grado, e.primer_apellido, e.primer_nombre
+        `);
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.json_to_sheet(rows);
+        xlsx.utils.book_append_sheet(wb, ws, 'consolidado');
+        const filename = 'consolidado_general_votacion.xlsx';
+        const tempPath = path.join(__dirname, '../uploads', filename);
+        ensureDir(path.dirname(tempPath));
+        xlsx.writeFile(wb, tempPath);
+        res.download(tempPath, filename, () => {
+            if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/votos/plantilla', async (req, res) => {
+    try {
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.json_to_sheet([
+            { documento: '12345678', candidatoPersonero: 'NOMBRE CANDIDATO', candidatoContralor: 'NOMBRE CANDIDATO', fecha_voto: '2026-01-01T10:00:00' }
+        ]);
+        xlsx.utils.book_append_sheet(wb, ws, 'votos');
+        const filename = 'plantilla_carga_votos.xlsx';
         const tempPath = path.join(__dirname, '../uploads', filename);
         ensureDir(path.dirname(tempPath));
         xlsx.writeFile(wb, tempPath);

@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (target === 'view-candidatos') Admin.cargarCandidatosTabla();
                 if (target === 'view-acta') Reports.renderActa('contenidoActa');
                 if (target === 'view-sedes') Admin.cargarSedesYGrados();
-                if (target === 'view-votos') Admin.cargarSelectSedes();
                 if (target === 'view-cargas') Admin.cargarResumenEstudiantes();
                 if (target === 'view-resultados') Reports.iniciarResultadosVivo();
             }
@@ -143,13 +142,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const formGrado = document.getElementById('formGrado');
     if (formGrado) formGrado.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await Admin.crearGrado(e.target.sede_id.value, e.target.nombreGrado.value);
-        e.target.reset();
+        const sedeSeleccionada = e.target.sede_id.value;
+        await Admin.crearGrado(sedeSeleccionada, e.target.nombreGrado.value);
+        e.target.nombreGrado.value = '';
+        e.target.sede_id.value = sedeSeleccionada;
     });
-
-    const btnExportar = document.getElementById('btnExportarVotos');
-    if (btnExportar) btnExportar.addEventListener('click', Admin.exportarVotosSede);
 
     const btnImportar = document.getElementById('btnImportarVotos');
     if (btnImportar) btnImportar.addEventListener('click', Admin.importarVotos);
+
+    const btnConsolidado = document.getElementById('btnExportarConsolidado');
+    if (btnConsolidado) btnConsolidado.addEventListener('click', Admin.descargarConsolidadoGeneral);
+
+    const btnPlantillaVotos = document.getElementById('btnPlantillaVotos');
+    if (btnPlantillaVotos) btnPlantillaVotos.addEventListener('click', Admin.descargarPlantillaVotos);
 });
