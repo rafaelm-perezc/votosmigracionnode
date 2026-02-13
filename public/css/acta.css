@@ -236,3 +236,7 @@ body {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+
+.firma-preview {
+    max-height: 80px;
+}

@@ -85,13 +85,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (target === 'view-config') Admin.cargarConfiguracion();
                 if (target === 'view-candidatos') Admin.cargarCandidatosTabla();
                 if (target === 'view-acta') Reports.renderActa('contenidoActa');
+                if (target === 'view-sedes') Admin.cargarSedesYGrados();
+                if (target === 'view-votos') Admin.cargarSelectSedes();
+                if (target === 'view-cargas') Admin.cargarResumenEstudiantes();
+                if (target === 'view-resultados') Reports.iniciarResultadosVivo();
             }
         });
     });
 
     // Botones "Volver" en admin
     document.querySelectorAll('.btn-back-admin').forEach(btn => {
-        btn.addEventListener('click', () => UI.showSection('view-admin'));
+        btn.addEventListener('click', () => {
+            Reports.detenerResultadosVivo();
+            UI.showSection('view-admin');
+        });
     });
     
     // --- FORMULARIOS ADMIN ---
@@ -102,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(formConfig) {
         formConfig.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
-            await Admin.guardarConfiguracion(new FormData(e.target)); 
+            await Admin.guardarConfiguracion(e.target); 
         });
     }
 
@@ -116,4 +123,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnPDF = document.getElementById('btnDescargarPDF');
     if(btnPDF) btnPDF.addEventListener('click', Reports.downloadPDF);
+
+    const btnPlantilla = document.getElementById('btnDescargarPlantilla');
+    if (btnPlantilla) btnPlantilla.addEventListener('click', Admin.descargarPlantilla);
+
+    const btnCerrar = document.getElementById('btnCerrarMesas');
+    if (btnCerrar) btnCerrar.addEventListener('click', Admin.cerrarMesas);
+
+    const btnAbrir = document.getElementById('btnAbrirMesas');
+    if (btnAbrir) btnAbrir.addEventListener('click', Admin.abrirMesas);
+
+    const formSede = document.getElementById('formSede');
+    if (formSede) formSede.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await Admin.crearSede(e.target.nombreSede.value);
+        e.target.reset();
+    });
+
+    const formGrado = document.getElementById('formGrado');
+    if (formGrado) formGrado.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await Admin.crearGrado(e.target.sede_id.value, e.target.nombreGrado.value);
+        e.target.reset();
+    });
+
+    const btnExportar = document.getElementById('btnExportarVotos');
+    if (btnExportar) btnExportar.addEventListener('click', Admin.exportarVotosSede);
+
+    const btnImportar = document.getElementById('btnImportarVotos');
+    if (btnImportar) btnImportar.addEventListener('click', Admin.importarVotos);
 });

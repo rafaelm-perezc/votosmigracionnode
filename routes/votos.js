@@ -6,11 +6,31 @@ const db = require('../database/db');
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => db.get(sql, params, (err, row) => err ? reject(err) : resolve(row)));
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => db.run(sql, params, function(err) { err ? reject(err) : resolve(this); }));
 
+const estaEnHorario = async () => {
+    const rows = await new Promise((resolve, reject) => db.all('SELECT clave, valor FROM configuracion', (err, r) => err ? reject(err) : resolve(r)));
+    const cfg = {};
+    rows.forEach((r) => { cfg[r.clave] = r.valor; });
+    if (cfg.votacion_habilitada === '0') return { ok: false, motivo: 'Las mesas fueron cerradas por administración.' };
+
+    const now = new Date();
+    const hoy = now.toISOString().slice(0, 10);
+    if (cfg.fecha && cfg.fecha !== hoy) return { ok: false, motivo: 'La votación solo está habilitada en la fecha configurada.' };
+
+    const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    if (cfg.hora_inicio && hhmm < cfg.hora_inicio) return { ok: false, motivo: 'La jornada aún no inicia.' };
+    if (cfg.hora_fin && hhmm > cfg.hora_fin) return { ok: false, motivo: 'La jornada de votación ya cerró.' };
+
+    return { ok: true };
+};
+
 // 1. JURADO: HABILITAR ESTUDIANTE (Bloquea la mesa para que vote)
 router.post('/habilitar', async (req, res) => {
     const { documento, usuario } = req.body;
 
     try {
+        const horario = await estaEnHorario();
+        if (!horario.ok) return res.status(403).json({ error: horario.motivo });
+
         // Obtener mesa del jurado
         const jurado = await dbGet("SELECT nummesa FROM usuarios WHERE usuario = ?", [usuario]);
         if (!jurado || !jurado.nummesa) return res.status(403).json({ error: "Usuario no autorizado." });
@@ -49,6 +69,9 @@ router.post('/registrar', async (req, res) => {
     const { documento, candidatoPersonero, candidatoContralor, numMesa } = req.body;
 
     try {
+        const horario = await estaEnHorario();
+        if (!horario.ok) return res.status(403).json({ error: horario.motivo });
+
         // Verificar duplicado
         const yaVoto = await dbGet("SELECT id FROM votos WHERE documento = ?", [documento]);
         if (yaVoto) return res.status(409).json({ error: "Voto duplicado." });

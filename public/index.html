@@ -121,9 +121,12 @@
             <h2 class="title is-4 has-text-centered">Panel de Administración</h2>
             <div class="columns is-multiline">
                 <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-cargas"><p class="title is-1">👥</p><p>Estudiantes</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-sedes"><p class="title is-1">🏫</p><p>Sedes y Grados</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-votos"><p class="title is-1">📥</p><p>Cargar / Descargar Votos</p></div></div>
                 <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-config"><p class="title is-1">⚙️</p><p>Configuración</p></div></div>
                 <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-candidatos"><p class="title is-1">🖼️</p><p>Candidatos</p></div></div>
                 <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-acta"><p class="title is-1">📄</p><p>Acta de Escrutinio</p></div></div>
+                <div class="column is-4"><div class="card p-4 has-text-centered card-action" data-target="view-resultados"><p class="title is-1">📊</p><p>Resultados en vivo</p></div></div>
             </div>
         </section>
 
@@ -131,19 +134,65 @@
             <button class="button is-small mb-4 btn-back-admin">← Volver</button>
             <div class="card p-5">
                 <h3 class="title is-5">Cargar Estudiantes</h3>
+                <button id="btnDescargarPlantilla" class="button is-link is-light mb-3">Descargar plantilla de carga masiva</button>
                 <div class="field">
                     <label class="label" for="fileEstudiantes">Archivo Excel</label>
                     <div class="control">
                         <input class="input" type="file" id="fileEstudiantes" accept=".xlsx, .xls" title="Seleccionar archivo de estudiantes">
                     </div>
                 </div>
-                <div class="field">
-                    <label class="label" for="numMesas">Número de mesas</label>
-                    <div class="control">
-                        <input class="input" type="number" id="numMesas" placeholder="Número de mesas">
+                <button id="btnCargarEstudiantes" class="button is-success">Procesar</button>
+                <div id="resumenEstudiantes" class="mt-4"></div>
+            </div>
+        </section>
+
+        <section id="view-sedes" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
+            <div class="columns">
+                <div class="column is-6">
+                    <div class="card p-4 mb-4">
+                        <h4 class="title is-6">Nueva sede</h4>
+                        <form id="formSede">
+                            <input class="input mb-2" name="nombreSede" placeholder="Nombre sede" required>
+                            <button class="button is-primary is-small" type="submit">Guardar sede</button>
+                        </form>
+                    </div>
+                    <div class="card p-4">
+                        <h4 class="title is-6">Nuevo grado por sede</h4>
+                        <form id="formGrado">
+                            <div class="select is-fullwidth mb-2"><select id="sedeGrado" name="sede_id" title="Seleccionar sede para el grado" aria-label="Seleccionar sede"></select></div>
+                            <input class="input mb-2" name="nombreGrado" placeholder="Ej: 5A" required>
+                            <button class="button is-link is-small" type="submit">Guardar grado</button>
+                        </form>
                     </div>
                 </div>
-                <button id="btnCargarEstudiantes" class="button is-success">Procesar</button>
+                <div class="column is-6">
+                    <div class="card p-4">
+                        <h4 class="title is-6">Sedes y grados configurados</h4>
+                        <ul id="listaSedesGrados"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-votos" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
+            <div class="columns">
+                <div class="column is-6">
+                    <div class="card p-4">
+                        <h4 class="title is-6">Descargar votos por sede</h4>
+                        <div class="select is-fullwidth mb-2"><select id="sedeVotos" title="Seleccionar sede para descargar votos" aria-label="Seleccionar sede de votos"></select></div>
+                        <button id="btnExportarVotos" class="button is-info is-small">Descargar Excel</button>
+                    </div>
+                </div>
+                <div class="column is-6">
+                    <div class="card p-4">
+                        <h4 class="title is-6">Cargar votos consolidados</h4>
+                        <label for="fileVotos" class="is-sr-only">Archivo de votos consolidados</label>
+<input id="fileVotos" type="file" class="input mb-2" accept=".xlsx,.xls" title="Seleccionar archivo de votos">
+                        <button id="btnImportarVotos" class="button is-success is-small">Importar votos</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -159,8 +208,20 @@
                         <div class="column is-6"><label class="label" for="confFecha">Fecha</label><input id="confFecha" class="input" name="fecha" type="date"></div>
                         <div class="column is-6"><label class="label" for="confInicio">Hora Inicio</label><input id="confInicio" class="input" name="hora_inicio" type="time"></div>
                         <div class="column is-6"><label class="label" for="confFin">Hora Fin</label><input id="confFin" class="input" name="hora_fin" type="time"></div>
+                        <div class="column is-6">
+                            <label class="label" for="fileFirmaRector">Firma Rector (PNG/SVG)</label>
+                            <input id="fileFirmaRector" class="input" name="firma_rector" type="file" accept=".png,.svg" title="Subir firma del rector">
+                        </div>
+                        <div class="column is-6">
+                            <label class="label" for="fileFirmaLider">Firma Líder (PNG/SVG)</label>
+                            <input id="fileFirmaLider" class="input" name="firma_lider" type="file" accept=".png,.svg" title="Subir firma del líder">
+                        </div>
+                        <div class="column is-6"><img id="firmaRectorActual" class="firma-preview" alt="Firma actual del rector"></div>
+                        <div class="column is-6"><img id="firmaLiderActual" class="firma-preview" alt="Firma actual del líder"></div>
                     </div>
                     <button type="submit" class="button is-primary">Guardar</button>
+                    <button id="btnCerrarMesas" type="button" class="button is-danger ml-2">Cerrar mesas</button>
+                    <button id="btnAbrirMesas" type="button" class="button is-success ml-2">Abrir mesas</button>
                 </form>
             </div>
         </section>
@@ -208,6 +269,17 @@
             
             <div id="contenidoActa" class="acta-container has-background-white p-6">
                 </div>
+        </section>
+
+        <section id="view-resultados" class="view-section is-hidden">
+            <button class="button is-small mb-4 btn-back-admin">← Volver</button>
+            <div class="card p-4">
+                <h3 class="title is-5">Resultados en vivo (0.5s)</h3>
+                <div class="columns">
+                    <div class="column"><h4 class="subtitle is-6">Personero</h4><div id="chartPersonero"></div></div>
+                    <div class="column"><h4 class="subtitle is-6">Contralor</h4><div id="chartContralor"></div></div>
+                </div>
+            </div>
         </section>
 
     </div>

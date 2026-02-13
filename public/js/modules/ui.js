@@ -3,8 +3,8 @@ export const UI = {
     // Lista de todas las vistas
     sections: [
         'view-login', 'view-mode', 'view-jurado', 'view-urna-espera', 
-        'view-tarjeton', 'view-admin', 'view-cargas', 'view-config', 
-        'view-candidatos', 'view-acta'
+        'view-tarjeton', 'view-admin', 'view-cargas', 'view-config',
+        'view-candidatos', 'view-acta', 'view-sedes', 'view-votos', 'view-resultados'
     ],
 
     showSection: (sectionId) => {

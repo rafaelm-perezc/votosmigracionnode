@@ -19,6 +19,8 @@ function initDb() {
         db.run(`CREATE TABLE IF NOT EXISTS votos (id INTEGER PRIMARY KEY AUTOINCREMENT, documento TEXT, candidatoPersonero TEXT, candidatoContralor TEXT, fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP)`);
         db.run(`CREATE TABLE IF NOT EXISTS candidatos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, cargo TEXT, imagen TEXT)`);
         db.run(`CREATE TABLE IF NOT EXISTS configuracion (id INTEGER PRIMARY KEY AUTOINCREMENT, clave TEXT UNIQUE, valor TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS sedes (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL)`);
+        db.run(`CREATE TABLE IF NOT EXISTS grados (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, sede_id INTEGER NOT NULL, UNIQUE(nombre, sede_id), FOREIGN KEY(sede_id) REFERENCES sedes(id) ON DELETE CASCADE)`);
 
         // --- NUEVA TABLA: CONTROL DE MESAS ---
         // Estado: 0 (Esperando), 1 (Votando)
@@ -36,7 +38,17 @@ function initDb() {
         });
 
         // Configuración por defecto
-        const configs = [['fecha', '2026-03-01'], ['hora_inicio', '08:00 A.M.'], ['hora_fin', '02:00 P.M.'], ['lugar', 'Sede Principal'], ['rector', 'NOMBRE RECTOR'], ['lider', 'NOMBRE LIDER']];
+        const configs = [
+            ['fecha', '2026-03-01'],
+            ['hora_inicio', '08:00'],
+            ['hora_fin', '14:00'],
+            ['lugar', 'Sede Principal'],
+            ['rector', 'NOMBRE RECTOR'],
+            ['lider', 'NOMBRE LIDER'],
+            ['firma_rector', ''],
+            ['firma_lider', ''],
+            ['votacion_habilitada', '1']
+        ];
         const stmtConfig = db.prepare("INSERT OR IGNORE INTO configuracion (clave, valor) VALUES (?, ?)");
         configs.forEach(c => stmtConfig.run(c));
         stmtConfig.finalize();
