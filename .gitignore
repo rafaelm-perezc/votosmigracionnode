@@ -8,8 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Base de datos SQLite (si no quieres versionarla)
-*.sqlite
-*.sqlite-journal
+#*.sqlite
+#*.sqlite-journal
 
 # Carpetas de archivos temporales o subidas
 uploads/
